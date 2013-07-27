@@ -459,13 +459,17 @@ class ConnectionPool(object):
     def _replace_wrapper(self):
         """Try to replace the connection."""
         if not self._q.full():
+            conn = self._create_connection()
+            conn._checkin()
+
             try:
-                conn = self._create_connection()
-                conn._checkin()
                 self._q.put(conn, False)
-                self._current_conns += 1
             except Queue.Full:
-                pass
+                conn._dispose_wrapper(reason="pool is already full")
+            else:
+                self._pool_lock.acquire()
+                self._current_conns += 1
+                self._pool_lock.release()
 
     def _clear_current(self):
         """ If using threadlocal, clear our threadlocal current conn. """

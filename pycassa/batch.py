@@ -126,7 +126,7 @@ class Mutator(object):
                                   allow_retries=self.allow_retries)
             self._buffer = []
         finally:
-            if conn:
+            if conn and conn.transport.isOpen():
                 conn.return_to_pool()
             self._lock.release()
 
